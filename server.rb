@@ -10,15 +10,19 @@ players = {}
 games = [ Game.new ]
 server = TCPServer.new(2000)
 
-Thread.new do
-  loop do
-    Thread.new(server.accept) do |client|
+def catch_errors(&block)
+  begin
+    block.call
+  rescue Exception => e
+    puts e.inspect
+  end
+end
+
+loop do
+  Thread.new(server.accept) do |client|
+    catch_errors do
       client.puts({ event: "waiting" })
-      begin
-        games.last.add_player(client)
-      rescue Exception => e
-        puts e.inspect
-      end
+      game.last.add_player(client)
     end
   end
 end.join

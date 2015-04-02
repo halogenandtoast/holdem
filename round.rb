@@ -31,6 +31,33 @@ class Round
     end
     deal_hole
     get_choices
+
+    if has_winner?
+      declare_winner
+      return
+    end
+
+    deal_flop
+    get_choices
+    if has_winner?
+      declare_winner
+      return
+    end
+
+    deal_turn
+    get_choices
+    if has_winner?
+      declare_winner
+      return
+    end
+
+    deal_river
+    get_choices
+    determine_winner
+  end
+
+  def has_winner?
+    @players.reject(&:eliminated?).count == 1
   end
 
   def get_choices
@@ -41,11 +68,25 @@ class Round
       case choice
       when "FOLD"
         @table[:events] << "#{player.name} FOLDED"
+        if has_winner?
+          return
+        end
       when "CALL"
         @table[:events] << "#{player.name} CALLED"
       when "RAISE"
         @table[:events] << "#{player.name} RAISED"
       end
+    end
+  end
+
+  def determine_winner
+    showdown_players = players.reject(&:eliminated?)
+    hands = showdown_players.map { |player| player.best_hand(table_cards) }
+    scores = hands.each_with_index.map { |hand, i| [i, HandScorer(hand).score] }
+    winner_index = scores.sort_by { |x| x[1] }.last[0]
+    winner = showdown_players[winner_index]
+    @players.each do |player|
+      player.showdown(winner, showdown_players, @players)
     end
   end
 
@@ -59,5 +100,20 @@ class Round
     puts "DEALT HOLE"
   end
 
+  def deal_flop
+    @table[:flop] += @deck.pop(3)
+  end
+
+  def deal_turn
+    @table[:turn] = @deck.pop(1)
+  end
+
+  def deal_river
+    @table[:river] = @deck.pop(1)
+  end
+
+  def table_cards
+    @table[:flop] + @table[:turn] + @table[:river]
+  end
 end
 

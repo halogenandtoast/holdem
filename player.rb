@@ -1,4 +1,5 @@
 require "timeout"
+require "best_hand"
 
 class Player
   attr_reader :money
@@ -17,6 +18,11 @@ class Player
           number_of_players: options[:number_of_players],
           small_blind: options[:small_blind],
           big_blind: options[:big_blind])
+  end
+
+  def best_hand(table_cards)
+    cards = @hand + table_cards
+    BestHand.new(cards).determine
   end
 
   def reset
@@ -66,6 +72,18 @@ class Player
     end
 
     choice
+  end
+
+  def showdown(player, showdown_players, players)
+    event("showdown", winner: player, players: players.map { |player| player.as_json(showdown_players) })
+  end
+
+  def to_json(showdown_players)
+    if showdown_players.include? self
+      { name: name, in_showdown: true, hand: @hand, money: @money }
+    else
+      { name: name, in_showdown: false, money: @money }
+    end
   end
 
   def declare_winner(player)

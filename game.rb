@@ -21,8 +21,6 @@ class Game
     end
   end
 
-  def play_
-
   def close
     players.each(&:close)
   end

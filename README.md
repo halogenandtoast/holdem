@@ -30,5 +30,6 @@
 
     { event: "hole", cards: [<card>, <card>] } # will contain two cards
 
+    { event: "round_over", winner: player }
     { event: "showdown", winner: player, players: [{ name: name, in_showdown: true, hand: hand }, ...]}
     { event: "game_over", winner: player }

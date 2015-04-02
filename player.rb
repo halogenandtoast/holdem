@@ -5,16 +5,19 @@ class Player
   attr_reader :money
   def initialize(client)
     @client = client
+    event("get_name")
+    @name = client.gets.strip
+    puts "#{@name} has joined"
   end
 
   def name
-    "foo"
+    @name
   end
 
   def game_start(options)
-    @base_money = options[:money]
+    @money = options[:money]
     event("game_start",
-          money: @base_money,
+          money: @money,
           number_of_players: options[:number_of_players],
           small_blind: options[:small_blind],
           big_blind: options[:big_blind])
@@ -26,7 +29,6 @@ class Player
   end
 
   def reset
-    @money = 1000
     @hand = []
     @eliminated = false
     @all_in = false
@@ -41,8 +43,11 @@ class Player
     event("hold", cards: cards)
   end
 
+  def round_over(winner)
+    event("round_over", winner: winner.as_json([]))
+  end
+
   def get_choice(table)
-    puts "PLAYER CHOICE"
     event("choice", table: table)
 
     choice = nil
@@ -56,19 +61,18 @@ class Player
 
     case choice.upcase
     when "RAISE"
-      puts "RAISING"
+      puts "#{name} raised"
       amount = [table[:raise_amount], @money].min
       @money -= amount
       table[:pot] += amount
       if @money == 0
         @all_in = true
       end
-      puts "DONE RAISING"
     when "FOLD"
-      puts "FOLDING"
+      puts "#{name} folded"
       @eliminated = true
     when "CALL"
-      puts "CALLING"
+      puts "#{name} called"
     end
 
     choice
@@ -78,7 +82,7 @@ class Player
     event("showdown", winner: player, players: players.map { |player| player.as_json(showdown_players) })
   end
 
-  def to_json(showdown_players)
+  def as_json(showdown_players)
     if showdown_players.include? self
       { name: name, in_showdown: true, hand: @hand, money: @money }
     else

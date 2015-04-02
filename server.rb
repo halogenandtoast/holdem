@@ -4,12 +4,6 @@ require "socket"
 require "json"
 require "game"
 
-trap(:INT) { exit }
-players = {}
-
-games = [ Game.new ]
-server = TCPServer.new(2000)
-
 def catch_errors(&block)
   begin
     block.call
@@ -18,11 +12,20 @@ def catch_errors(&block)
   end
 end
 
+
+trap(:INT) { exit }
+players = {}
+
+games = [ Game.new ]
+server = TCPServer.new(2000)
+
 loop do
   Thread.new(server.accept) do |client|
     catch_errors do
-      client.puts({ event: "waiting" })
-      game.last.add_player(client)
+      games.last.add_player(client)
+      if games.last.started
+        games << Game.new
+      end
     end
   end
 end.join

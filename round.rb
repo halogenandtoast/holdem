@@ -61,9 +61,7 @@ class Round
   end
 
   def get_choices
-    puts "GETTING CHOICES"
     @players.reject(&:eliminated?).each do |player|
-      puts "GETTING CHOICE"
       choice = player.get_choice(@table)
       case choice
       when "FOLD"
@@ -79,6 +77,13 @@ class Round
     end
   end
 
+  def declare_winner
+    winner = @players.find { |player| !player.eliminated? }
+    @players.each do |player|
+      player.round_over(winner)
+    end
+  end
+
   def determine_winner
     showdown_players = players.reject(&:eliminated?)
     hands = showdown_players.map { |player| player.best_hand(table_cards) }
@@ -91,13 +96,12 @@ class Round
   end
 
   def deal_hole
-    puts "DEALING HOLE"
+    puts "Dealing hole"
     @players.each do |player|
       hole = @deck.pop(2)
       @hands[player] << hole
       player.deal(hole)
     end
-    puts "DEALT HOLE"
   end
 
   def deal_flop

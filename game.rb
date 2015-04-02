@@ -2,7 +2,9 @@ require "player"
 require "round"
 
 class Game
+  attr_reader :started
   def initialize
+    @started = false
     @players = []
     run
   end
@@ -12,8 +14,8 @@ class Game
   end
 
   def run
-    Thread.new do
-      catch_errors do
+    catch_errors do
+      Thread.new do
         run_game
         declare_winner
         close
@@ -30,7 +32,7 @@ class Game
   attr_reader :deck, :players
 
   def has_winner?
-    players.reject(&:eliminated?).count == 1
+    players.reject { |player| player.money == 0 }.count == 1
   end
 
   def winner
@@ -44,6 +46,8 @@ class Game
   def run_game
     loop do
       if players.count == 2
+        @started = true
+        puts "START ROUND"
         play_round
         break if has_winner?
       end

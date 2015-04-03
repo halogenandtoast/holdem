@@ -15,18 +15,13 @@ end
 
 
 trap(:INT) { exit }
-players = {}
 
-games = [ Game.new ]
+$games = [ Game.new(1) ]
 server = TCPServer.new(2000)
+semaphore = Mutex.new
 
 loop do
   Thread.new(server.accept) do |client|
-    catch_errors do
-      games.last.add_player(client)
-      if games.last.started
-        games << Game.new
-      end
-    end
+    $games.last.add_player(client)
   end
-end.join
+end

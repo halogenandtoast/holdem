@@ -3,7 +3,9 @@ require "round"
 
 class Game
   attr_reader :started
-  def initialize
+  def initialize(id)
+    puts "CREATING GAME #{id}"
+    @id = id
     @started = false
     @players = []
     run
@@ -11,15 +13,14 @@ class Game
 
   def add_player(client)
     players << Player.new(client)
+    puts "Added #{players.last.name} to #{@id}"
   end
 
   def run
-    catch_errors do
-      Thread.new do
-        run_game
-        declare_winner
-        close
-      end
+    Thread.new do
+      run_game
+      declare_winner
+      close
     end
   end
 
@@ -46,9 +47,11 @@ class Game
   def run_game
     loop do
       if players.count == ENV.fetch("PLAYER_COUNT", 4)
+        $games << Game.new(@id + 1)
         if !@started
-          setup_players
+          puts "STARTED GAME #{@id}"
           @started = true
+          setup_players
         end
         play_round
         if !has_winner?
@@ -59,6 +62,8 @@ class Game
         else
           break
         end
+      else
+        sleep 5
       end
     end
   end

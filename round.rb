@@ -58,7 +58,7 @@ class Round
     begin
       player = @players.reject(&:eliminated?)[1]
       player.big_blind(table)
-      puts "Big blind from #{player.name}"
+      puts "Big blind from #{player.name}: #{player.bid}"
     rescue Exception => e
       binding.pry
       puts e
@@ -70,7 +70,7 @@ class Round
     begin
       player = @players.reject(&:eliminated?)[0]
       player.small_blind(table)
-      puts "Small blind from #{player.name}"
+      puts "Small blind from #{player.name}: #{player.bid}"
     rescue Exception => e
       binding.pry
       puts e
@@ -90,12 +90,18 @@ class Round
           when "FOLD"
             @table[:events] << "#{player.name} FOLDED"
             if has_winner?
+              setup_sidepots
+              return
+            end
+            if @players.select(&:can_bid?).map(&:bid).uniq.count == 1
+              setup_sidepots
               return
             end
           when "CALL"
             @table[:events] << "#{player.name} CALLED"
             if @players.select(&:can_bid?).map(&:bid).uniq.count == 1
-              break
+              setup_sidepots
+              return
             end
           when "RAISE"
             @table[:events] << "#{player.name} RAISED"
@@ -104,19 +110,7 @@ class Round
         offset = 0
       end
 
-      if @players.any?(&:all_in)
-        all_in = @players.select(&:all_in).sort_by(&:bid)
-        all_in_amount = all_in.first.bid
-        all_in.each do |player|
-          if player.sidepots == 0
-            new_all_in_amount = @table[:pot] + @players.reject(&:eliminated?).map { |o| [o.bid, player.bid].min }.reduce(:+)
-            if new_all_in_amount != all_in_amount
-              table[:sidepots] << all_in_amount
-            end
-            player.sidepots = table[:sidepots].length
-          end
-        end
-      end
+      setup_sidepots
       @table[:bids] = []
     rescue Exception => e
       binding.pry
@@ -125,9 +119,25 @@ class Round
     end
   end
 
+  def setup_sidepots
+    if @players.any?(&:all_in)
+      all_in = @players.select(&:all_in).sort_by(&:bid)
+      all_in_amount = all_in.first.bid
+      all_in.each do |player|
+        if player.sidepots == 0
+          new_all_in_amount = @table[:pot] + @players.reject(&:eliminated?).map { |o| [o.bid, player.bid].min }.reduce(:+)
+          if new_all_in_amount != all_in_amount
+            table[:sidepots] << all_in_amount
+          end
+          player.sidepots = table[:sidepots].length
+        end
+      end
+    end
+  end
+
   def declare_winner
     puts "DECLARING WINNER"
-    winner = @players.find { |player| !player.eliminated? }
+    winner = @players.find { |player| !player.out? }
     winner.money += @table[:pot]
 
     @players.each do |player|

@@ -76,21 +76,21 @@ class Player
 
     case choice.upcase
     when "RAISE"
-      puts "#{name} raised"
       diff = (table[:bids].last - @bid) + table[:raise_amount]
       amount = [diff, @money].min
       @money -= amount
       @bid += amount
       table[:pot] += amount
       if @money == 0
-        puts "#{name} is all in"
+        puts "#{name} is raising all in: #{@bid}"
         @all_in = true
         table[:bids].unshift @bid
       else
+        puts "#{name} raised: #{@bid}"
         table[:bids] << @bid
       end
     when "FOLD"
-      puts "#{name} folded"
+      puts "#{name} folded: #{@bid}"
       @folded = true
     when "CALL"
       diff = table[:bids].last - @bid
@@ -99,13 +99,13 @@ class Player
       @bid += amount
       table[:pot] += amount
       if @money == 0
-        puts "#{name} is all in"
+        puts "#{name} is all in: #{@bid}"
         @all_in = true
         table[:bids].unshift @bid
       else
         table[:bids] << @bid
       end
-      puts "#{name} called"
+      puts "#{name} called: #{@bid}"
     end
 
     choice

@@ -2,10 +2,14 @@ require "timeout"
 require "best_hand"
 
 class Player
-  attr_reader :money
+  attr_accessor :money, :sidepots
+  attr_reader :bid, :all_in
+  attr_writer :eliminated
+
   def initialize(client)
     @client = client
     event("get_name")
+    @eliminated = false
     @name = client.gets.strip
     puts "#{@name} has joined"
   end
@@ -30,8 +34,14 @@ class Player
 
   def reset
     @hand = []
-    @eliminated = false
+    @folded = false
     @all_in = false
+    @sidepots = 0
+    @bid = 0
+  end
+
+  def out?
+    @folded || @eliminated
   end
 
   def eliminated?
@@ -40,11 +50,15 @@ class Player
 
   def deal(cards)
     @hand << cards
-    event("hold", cards: cards)
+    event("hole", cards: cards)
   end
 
   def round_over(winner)
     event("round_over", winner: winner.as_json([]))
+  end
+
+  def can_bid?
+    !out? && !@all_in
   end
 
   def get_choice(table)
@@ -56,26 +70,69 @@ class Player
       Timeout::timeout(6) { choice = @client.gets.strip }
     rescue Timeout::Error
       event("timeout")
+      @folded = true
       choice = "FOLD"
     end
 
     case choice.upcase
     when "RAISE"
       puts "#{name} raised"
-      amount = [table[:raise_amount], @money].min
+      diff = (table[:bids].last - @bid) + table[:raise_amount]
+      amount = [diff, @money].min
       @money -= amount
+      @bid += amount
       table[:pot] += amount
       if @money == 0
+        puts "#{name} is all in"
         @all_in = true
+        table[:bids].unshift @bid
+      else
+        table[:bids] << @bid
       end
     when "FOLD"
       puts "#{name} folded"
-      @eliminated = true
+      @folded = true
     when "CALL"
+      diff = table[:bids].last - @bid
+      amount = [diff, @money].min
+      @money -= amount
+      @bid += amount
+      table[:pot] += amount
+      if @money == 0
+        puts "#{name} is all in"
+        @all_in = true
+        table[:bids].unshift @bid
+      else
+        table[:bids] << @bid
+      end
       puts "#{name} called"
     end
 
     choice
+  end
+
+  def big_blind(table)
+    amount = [table[:big_blind], @money].min
+    @money -= amount
+    @bid += amount
+    table[:bids] << @bid
+    table[:pot] += @bid
+    if @money == 0
+      @all_in = true
+    end
+    event("big_blind", amount: amount)
+  end
+
+  def small_blind(table)
+    amount = [table[:small_blind], @money].min
+    @money -= amount
+    @bid += amount
+    table[:pot] += @bid
+    table[:bids] << @bid
+    if @money == 0
+      @all_in = true
+    end
+    event("small_blind", amount: amount)
   end
 
   def showdown(player, showdown_players, players)
@@ -100,6 +157,10 @@ class Player
 
   def close
     @client.close
+  end
+
+  def sidepot(amount)
+    event("sidepot", amount: amount)
   end
 
   private

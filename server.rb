@@ -8,6 +8,7 @@ def catch_errors(&block)
   begin
     block.call
   rescue Exception => e
+    binding.pry
     puts e.inspect
   end
 end

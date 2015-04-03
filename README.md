@@ -12,8 +12,8 @@
 
     { event: "waiting" }
     { event: "game_start", money: 1000, number_of_players: 4, small_blind: 1, big_blind: 2, limit: bool } # limit is randomly assigned
-    { event: "big_blind" }
-    { event: "little_blind" }
+    { event: "big_blind", amount: n }
+    { event: "small_blind", amount: n }
     { event: "round_start", position: 1} # position 1 is player after the dealer and dealer will have the highest position
     { event: "choice", table: {
       betting_round: 1 # up to 4

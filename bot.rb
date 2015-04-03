@@ -1,21 +1,22 @@
 require "socket"
 require "json"
 
-2.times.map do |i|
+4.times.map do |i|
   Thread.new do
     client = TCPSocket.new 'localhost', 2000
 
     while line = client.gets
       json = JSON.parse(line)
       puts json
-      if json["event"] == "choice"
+      case json["event"]
+      when "choice"
         choice = %w(RAISE CALL FOLD).sample
         puts "Rando #{i} will #{choice}"
         client.puts choice
-      elsif json["event"] == "game_over"
+      when "game_over"
         puts "WINNERS DECLARED"
         break
-      elsif json["event"] == "get_name"
+      when "get_name"
         client.puts "Rando #{i}"
       end
     end

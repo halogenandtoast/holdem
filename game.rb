@@ -45,18 +45,26 @@ class Game
 
   def run_game
     loop do
-      if players.count == 2
-        @started = true
-        puts "START ROUND"
+      if players.count == ENV.fetch("PLAYER_COUNT", 4)
+        if !@started
+          setup_players
+          @started = true
+        end
         play_round
-        break if has_winner?
+        if !has_winner?
+          players.rotate!
+          while players.first.eliminated?
+            players.rotate!
+          end
+        else
+          break
+        end
       end
     end
   end
 
   def play_round
-    setup_players
-    round = Round.new(players)
+    round = Round.new(players, small_blind: 25, big_blind: 50, limit: true, number_of_players: players.count)
     round.play
   end
 

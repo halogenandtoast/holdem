@@ -35,6 +35,8 @@ class Round
       return
     end
 
+    reset_bids
+
     deal_flop
     get_choices
     if has_winner?
@@ -42,12 +44,16 @@ class Round
       return
     end
 
+    reset_bids
+
     deal_turn
     get_choices
     if has_winner?
       declare_winner
       return
     end
+
+    reset_bids
 
     deal_river
     get_choices
@@ -57,6 +63,11 @@ class Round
     end
 
     determine_winner(players, players.reject(&:out?), table[:pot], table[:sidepots])
+  end
+
+  def reset_bids
+    @players.each { |player| player.bid = 0 }
+    @table[:bid] = []
   end
 
   def big_blind
@@ -98,13 +109,13 @@ class Round
               setup_sidepots
               return
             end
-            if @players.select(&:can_bid?).map(&:bid).uniq.count == 1
+            if @players.select(&:can_bid?).map(&:bid).uniq.count == 1 && @players.select(&:can_bid?).map(&:bid).first != 0
               setup_sidepots
               return
             end
           when "CALL"
             @table[:events] << { type: "call", player: player.as_json([]), bid: player.bid }
-            if @players.select(&:can_bid?).map(&:bid).uniq.count == 1
+            if @players.select(&:can_bid?).map(&:bid).uniq.count == 1 && @players.select(&:can_bid?).map(&:bid).first != 0
               setup_sidepots
               return
             end

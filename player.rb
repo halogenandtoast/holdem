@@ -49,7 +49,7 @@ class Player
   end
 
   def deal(cards)
-    @hand << cards
+    @hand += cards
     event("hole", cards: cards)
   end
 
@@ -135,13 +135,13 @@ class Player
     event("small_blind", amount: amount)
   end
 
-  def showdown(player, showdown_players, players)
-    event("showdown", winner: player, players: players.map { |player| player.as_json(showdown_players) })
+  def showdown(player, showdown_players, players, best_hands)
+    event("showdown", winner: player, players: players.map { |player| player.as_json(showdown_players, best_hands) })
   end
 
-  def as_json(showdown_players)
+  def as_json(showdown_players, best_hands = {})
     if showdown_players.include? self
-      { name: name, in_showdown: true, hand: @hand, money: @money }
+      { name: name, in_showdown: true, hand: @hand, money: @money, best_hand: best_hands[self] }
     else
       { name: name, in_showdown: false, money: @money }
     end

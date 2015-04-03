@@ -51,6 +51,11 @@ class Round
 
     deal_river
     get_choices
+    if has_winner?
+      declare_winner
+      return
+    end
+
     determine_winner(players, players.reject(&:out?), table[:pot], table[:sidepots])
   end
 
@@ -185,8 +190,12 @@ class Round
           end
         end
 
+        best_hands = @players.each_with_object({}) do |player, hash|
+          hash[player] = player.best_hand(table_cards)
+        end
+
         @players.each do |player|
-          player.showdown(winner, showdown_players, @players)
+          player.showdown(winner, showdown_players, @players, best_hands)
         end
         puts(@players.map { |player| player.as_json([]) })
         puts "#{winner.name} wins"

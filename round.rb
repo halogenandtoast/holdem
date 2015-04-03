@@ -93,7 +93,7 @@ class Round
           choice = player.get_choice(@table)
           case choice
           when "FOLD"
-            @table[:events] << "#{player.name} FOLDED"
+            @table[:events] << { type: "fold", player: player.as_json([]), bid: player.bid }
             if has_winner?
               setup_sidepots
               return
@@ -103,13 +103,13 @@ class Round
               return
             end
           when "CALL"
-            @table[:events] << "#{player.name} CALLED"
+            @table[:events] << { type: "call", player: player.as_json([]), bid: player.bid }
             if @players.select(&:can_bid?).map(&:bid).uniq.count == 1
               setup_sidepots
               return
             end
           when "RAISE"
-            @table[:events] << "#{player.name} RAISED"
+            @table[:events] << { type: "raise", player: player.as_json([]), bid: player.bid }
           end
         end
         offset = 0
@@ -146,7 +146,7 @@ class Round
     winner.money += @table[:pot]
 
     @players.each do |player|
-      player.round_over(winner)
+      player.round_over(winner, @table[:pot])
     end
     puts(@players.map { |player| player.as_json([]) })
     puts "#{winner.name} wins"

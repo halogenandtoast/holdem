@@ -6,11 +6,15 @@
 
     <card> format is a string "AH", "TC", "2S", etc.
     <type> is "raise", "fold", "call"
-    <player_event> is { type: <type> } a raise type will include amount: x if limit is false in "game_start" event
+    <player_event> is { type: <type>, player: <player>, bid: current_bid_amount } a raise type will include amount: x if limit is false in "game_start" event
+    <player> = if player was in showdown
+                 { name: name, in_showdown: true, hand: [<card>, <card>], money: n, best_hand: [<card>, <card>, <card>, <card>, <card>] }
+               otherwise
+                 { name: name, in_showdown: false, money: n }
 
 ### Event
 
-    { event: "waiting" }
+    { event: "get_name" } # client should puts name
     { event: "game_start", money: 1000, number_of_players: 4, small_blind: 1, big_blind: 2, limit: bool } # limit is randomly assigned
     { event: "big_blind", amount: n }
     { event: "small_blind", amount: n }
@@ -30,6 +34,7 @@
 
     { event: "hole", cards: [<card>, <card>] } # will contain two cards
 
-    { event: "round_over", winner: player }
-    { event: "showdown", winner: player, players: [{ name: name, in_showdown: true, hand: hand }, ...]}
-    { event: "game_over", winner: player }
+    { event: "round_over", winner: <player>, pot: n }
+    { event: "showdown", winner: <player>, players: [<player>, ...]}
+    { event: "sidepot", amount: n } # If an all in player wins, sidepots will be assigned
+    { event: "game_over", winner: <player>, won: bool } # won informs you if you are the winner

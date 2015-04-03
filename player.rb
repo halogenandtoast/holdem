@@ -53,8 +53,8 @@ class Player
     event("hole", cards: cards)
   end
 
-  def round_over(winner)
-    event("round_over", winner: winner.as_json([]))
+  def round_over(winner, pot)
+    event("round_over", winner: winner.as_json([]), pot: pot)
   end
 
   def can_bid?
@@ -106,6 +106,10 @@ class Player
         table[:bids] << @bid
       end
       puts "#{name} called: #{@bid}"
+    else
+      puts "#{name} folded: #{@bid}"
+      @folded = true
+      event("invalid_command")
     end
 
     choice
@@ -136,7 +140,7 @@ class Player
   end
 
   def showdown(player, showdown_players, players, best_hands)
-    event("showdown", winner: player, players: players.map { |player| player.as_json(showdown_players, best_hands) })
+    event("showdown", winner: player.as_json(showdown_players, best_hands), players: players.map { |player| player.as_json(showdown_players, best_hands) })
   end
 
   def as_json(showdown_players, best_hands = {})
